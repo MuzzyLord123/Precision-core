@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* MobiMedic Design System — Dark-first */
+    --background: 240 6% 3.3%;
+    --foreground: 248 10% 95%;
+
+    --card: 240 7% 5.5%;
+    --card-foreground: 248 10% 95%;
+
+    --popover: 240 7% 5.5%;
+    --popover-foreground: 248 10% 95%;
+
+    --primary: 355 71% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 8.6%;
+    --secondary-foreground: 248 10% 95%;
+
+    --muted: 240 5% 10.2%;
+    --muted-foreground: 248 10% 68%;
+
+    --accent: 240 5% 10.2%;
+    --accent-foreground: 248 10% 95%;
+
+    --destructive: 355 71% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 100% / 0.06;
+    --input: 0 0% 100% / 0.06;
+    --ring: 355 71% 42%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 240 6% 3.3%;
+    --sidebar-foreground: 248 10% 68%;
+    --sidebar-primary: 355 71% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 10.2%;
+    --sidebar-accent-foreground: 248 10% 95%;
+    --sidebar-border: 0 0% 100% / 0.04;
+    --sidebar-ring: 355 71% 42%;
+
+    /* Custom MobiMedic tokens */
+    --graphite-void: #080809;
+    --graphite-surface: #0F0F12;
+    --graphite-elevated: #161619;
+    --graphite-control: #1D1D21;
+    --signal-red: #CC2936;
+    --red-glow: rgba(204,41,54,0.08);
+    --red-mid: rgba(204,41,54,0.35);
+    --red-soft: rgba(204,41,54,0.12);
+    --steel-white: #F0EFF4;
+    --mist-color: rgba(240,239,244,0.55);
+    --ghost-color: rgba(240,239,244,0.22);
+    --smoke: rgba(255,255,255,0.06);
+    --smoke-strong: rgba(255,255,255,0.12);
+    --light-bg: #F5F4F6;
+    --light-surface: #FFFFFF;
+    --light-border: rgba(0,0,0,0.07);
+    --light-text: #0D0D10;
+    --light-secondary: #6B6B78;
+    --color-success: #30C85E;
+    --color-warning: #F59E0B;
+    --color-error: #CC2936;
+
+    /* Typography */
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--graphite-void);
+    color: var(--steel-white);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+
+  ::selection {
+    background: rgba(204,41,54,0.3);
+    color: var(--steel-white);
+  }
+}
+
+/* Grain texture overlay for sections */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vignette for dark sections */
+.vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Circuit trace pattern */
+.circuit-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 200h100l20-20h60l20 20h100M200 50v60l-20 20v40l20 20v60M100 100l50 50M300 100l-50 50M100 300l50-50M300 300l-50-50M150 50h20M230 50h20M150 350h20M230 350h20' stroke='%23fff' stroke-width='0.5' fill='none' opacity='0.02'/%3E%3Ccircle cx='150' cy='200' r='2' fill='%23fff' opacity='0.03'/%3E%3Ccircle cx='250' cy='200' r='2' fill='%23fff' opacity='0.03'/%3E%3Ccircle cx='200' cy='150' r='2' fill='%23fff' opacity='0.03'/%3E%3Ccircle cx='200' cy='250' r='2' fill='%23fff' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 400px 400px;
+}
+
+/* Section diagonal cut */
+.diagonal-cut-top {
+  clip-path: polygon(0 24px, 100% 0, 100% 100%, 0 100%);
+}
+
+.diagonal-cut-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), 0 100%);
+}
+
+/* Red reveal line */
+@keyframes red-reveal {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.red-line-reveal {
+  height: 1px;
+  background: var(--signal-red);
+  transform-origin: left;
+  animation: red-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Loading skeleton with red tint */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--graphite-elevated) 25%, rgba(204,41,54,0.05) 50%, var(--graphite-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* Trust bar scroll */
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
