@@ -18,6 +18,16 @@ export default {
         body: ["DM Sans", "sans-serif"],
         mono: ["DM Mono", "monospace"],
       },
+      // The design system leans on these very low alphas; without them
+      // Tailwind silently drops modifiers like /8 and text renders opaque.
+      opacity: {
+        3: "0.03",
+        4: "0.04",
+        6: "0.06",
+        8: "0.08",
+        12: "0.12",
+        18: "0.18",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

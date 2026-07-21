@@ -6,7 +6,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomCursor from "@/components/CustomCursor";
 import MobileCTA from "@/components/MobileCTA";
-import { supabase } from "@/integrations/supabase/client";
+import { pricingData, minPriceFor } from "@/lib/pricing";
+import { createEnquiry, makeEnquiryRef } from "@/lib/enquiries";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -20,22 +21,18 @@ const devices = [
 ];
 
 const models: Record<string, string[]> = {
-  iphone: ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14", "iPhone 13 Pro Max", "iPhone 13", "iPhone 12", "iPhone 11", "iPhone SE"],
-  samsung: ["Galaxy S24 Ultra", "Galaxy S24+", "Galaxy S24", "Galaxy S23 Ultra", "Galaxy S23", "Galaxy A54", "Galaxy A34"],
-  ipad: ["iPad Pro 12.9\"", "iPad Pro 11\"", "iPad Air", "iPad Mini", "iPad 10th Gen"],
-  macbook: ["MacBook Pro 16\"", "MacBook Pro 14\"", "MacBook Air 15\"", "MacBook Air 13\""],
-  laptop: ["HP", "Dell", "Lenovo", "ASUS", "Acer", "Microsoft Surface", "Other"],
+  ...Object.fromEntries(Object.entries(pricingData).map(([tab, rows]) => [tab, rows.map(r => r.model)])),
   other: ["Apple Watch", "AirPods", "Gaming Console", "iMac", "Other"],
 };
 
 const repairs = [
-  { id: "screen", label: "Screen Replacement", price: "£79", icon: Smartphone },
-  { id: "battery", label: "Battery Replacement", price: "£49", icon: Smartphone },
-  { id: "port", label: "Charging Port", price: "£45", icon: Smartphone },
-  { id: "camera", label: "Camera Repair", price: "£69", icon: Smartphone },
+  { id: "screen", label: "Screen Replacement", price: `£${minPriceFor("screen")}`, icon: Smartphone },
+  { id: "battery", label: "Battery Replacement", price: `£${minPriceFor("battery")}`, icon: Smartphone },
+  { id: "port", label: "Charging Port", price: `£${minPriceFor("port")}`, icon: Smartphone },
+  { id: "camera", label: "Camera Repair", price: `£${minPriceFor("camera")}`, icon: Smartphone },
   { id: "water", label: "Water Damage", price: "£59", icon: Smartphone },
   { id: "data", label: "Data Recovery", price: "£59", icon: Smartphone },
-  { id: "keyboard", label: "Keyboard/Trackpad", price: "£69", icon: Smartphone },
+  { id: "keyboard", label: "Keyboard/Trackpad", price: "£89", icon: Smartphone },
   { id: "software", label: "Software & Diagnostics", price: "£29", icon: Smartphone },
   { id: "restoration", label: "Full Restoration", price: "£99", icon: Smartphone },
 ];
@@ -59,7 +56,7 @@ const Book = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [refNum] = useState(() => `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  const [refNum] = useState(makeEnquiryRef);
 
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -73,27 +70,21 @@ const Book = () => {
   };
 
   const handleConfirm = async () => {
-    if (submitting) return;
     setSubmitting(true);
     setSubmitError("");
-    const { error } = await supabase.from("enquiries").insert({
-      guest_name: name,
-      guest_email: email,
-      guest_phone: phone,
-      device_type: device,
-      device_model: model,
-      repairs_requested: selectedRepairs,
-      booked_date: isWalkIn ? null : date,
-      booked_time: isWalkIn ? null : timeSlot,
-      is_walk_in: isWalkIn,
-      issue_description: extraInfo || null,
-      how_found_us: source || null,
+    const error = await createEnquiry({
+      kind: "booking",
       ref: refNum,
-      source: "booking_flow",
+      name, email, phone,
+      device, model,
+      repairs: selectedRepairs,
+      date, time: timeSlot, isWalkIn,
+      notes: extraInfo,
+      source,
     });
     setSubmitting(false);
     if (error) {
-      setSubmitError("Something went wrong submitting your booking. Please try again.");
+      setSubmitError(error);
       return;
     }
     setConfirmed(true);
@@ -132,6 +123,7 @@ const Book = () => {
           </motion.div>
         </main>
         <Footer />
+        <MobileCTA />
       </>
     );
   }
@@ -301,6 +293,7 @@ const Book = () => {
         </div>
       </main>
       <Footer />
+      <MobileCTA />
     </>
   );
 };

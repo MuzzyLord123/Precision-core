@@ -46,16 +46,21 @@ export const pricingData: Record<DeviceTab, PricingRow[]> = {
   ],
 };
 
-export const repairColumns = ["screen", "battery", "port", "camera"] as const;
+const repairColumns = ["screen", "battery", "port", "camera"] as const;
 export type RepairColumn = (typeof repairColumns)[number];
 
-export const isDeviceTab = (d: string): d is DeviceTab => d in pricingData;
-export const isRepairColumn = (r: string): r is RepairColumn => (repairColumns as readonly string[]).includes(r);
+const isDeviceTab = (d: string): d is DeviceTab => d in pricingData;
+const isRepairColumn = (r: string): r is RepairColumn => (repairColumns as readonly string[]).includes(r);
 
 const priceNumbers = (value: string): number[] => (value.match(/£\d+/g) || []).map(v => Number(v.slice(1)));
 
 /** Published price for a device + model + repair. `exact` is false when the table lists a range. Null if not in the tables. */
-export const lookupPrice = (device: DeviceTab, model: string, repair: RepairColumn): { amount: number; exact: boolean } | null => {
+export const lookupPrice = (
+  device: string | null | undefined,
+  model: string | null | undefined,
+  repair: string | null | undefined,
+): { amount: number; exact: boolean } | null => {
+  if (!device || !model || !repair || !isDeviceTab(device) || !isRepairColumn(repair)) return null;
   const row = pricingData[device].find(r => r.model === model);
   const prices = row ? priceNumbers(row[repair]) : [];
   return prices.length ? { amount: Math.min(...prices), exact: prices.length === 1 } : null;

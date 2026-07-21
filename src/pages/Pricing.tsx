@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomCursor from "@/components/CustomCursor";
+import MobileCTA from "@/components/MobileCTA";
 import SectionReveal from "@/components/SectionReveal";
 import { pricingData, type DeviceTab } from "@/lib/pricing";
 
@@ -105,6 +106,7 @@ const Pricing = () => {
         </SectionReveal>
       </main>
       <Footer />
+      <MobileCTA />
     </>
   );
 };

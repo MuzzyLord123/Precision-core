@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Inbox, Wrench, CheckCircle2, Users, DollarSign, Settings, LogOut, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Smartphone, Monitor, Tablet, Watch, Headphones, Gamepad2, Search, Eye, Trash2, X, Plus
+  LayoutDashboard, Inbox, Wrench, CheckCircle2, Users, DollarSign, Settings, LogOut, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Search, Eye, X, Plus
 } from "lucide-react";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
@@ -41,6 +41,7 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [shopInfo, setShopInfo] = useState({ shop_name: "MobiMedic", address: "Guilden Sutton, Chester", phone: "+44 1234 567890", email: "hello@mobimedic.co.uk" });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,8 +81,11 @@ const Dashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Only fetched once the owner actually opens Settings.
   useEffect(() => {
+    if (!user || tab !== "settings" || settingsLoaded) return;
     const loadSettings = async () => {
+      setSettingsLoaded(true);
       const { data } = await supabase.from("business_settings").select("shop_name, address, phone, email").eq("id", 1).single();
       if (data) {
         setShopInfo(prev => ({
@@ -93,7 +97,7 @@ const Dashboard = () => {
       }
     };
     loadSettings();
-  }, []);
+  }, [user, tab, settingsLoaded]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -107,22 +111,43 @@ const Dashboard = () => {
     return "Good evening";
   };
 
-  const todayStr = new Date().toDateString();
-  const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
-  const newToday = enquiries.filter(e => new Date(e.created_at).toDateString() === todayStr).length;
-  const completedToday = enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).toDateString() === todayStr).length;
-  const completedYesterday = enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).toDateString() === yesterdayStr).length;
+  // One pass over enquiries feeds every count, tally and revenue figure below.
+  const stats = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+    const counts: Record<string, number> = {};
+    let newToday = 0, completedToday = 0, completedYesterday = 0;
+    let completedCount = 0, totalRevenue = 0, monthRevenue = 0;
+
+    for (const e of enquiries) {
+      counts[e.status] = (counts[e.status] ?? 0) + 1;
+      if (new Date(e.created_at).toDateString() === todayStr) newToday++;
+      if (e.status !== "completed") continue;
+      completedCount++;
+      const value = e.confirmed_price_pence || e.estimated_price_pence || 0;
+      totalRevenue += value;
+      if (!e.completed_at) continue;
+      const completedAt = new Date(e.completed_at);
+      if (completedAt.toDateString() === todayStr) completedToday++;
+      if (completedAt.toDateString() === yesterdayStr) completedYesterday++;
+      if (completedAt.getTime() >= monthStart) monthRevenue += value;
+    }
+    return { counts, newToday, completedToday, completedYesterday, completedCount, totalRevenue, monthRevenue };
+  }, [enquiries]);
+
+  const countOf = (status: string) => stats.counts[status] ?? 0;
 
   const kpis: { label: string; value: number; icon: any; trend?: string; up?: boolean }[] = [
-    { label: "New Enquiries", value: enquiries.filter(e => e.status === "new").length, icon: Inbox, trend: `+${newToday} today`, up: newToday > 0 },
-    { label: "Active Repairs", value: enquiries.filter(e => e.status === "in_progress").length, icon: Wrench },
-    { label: "Completed Today", value: completedToday, icon: CheckCircle2, trend: `vs ${completedYesterday} yesterday`, up: completedToday >= completedYesterday },
-    { label: "Awaiting Collection", value: enquiries.filter(e => e.status === "ready_for_collection").length, icon: Clock, trend: "devices ready", up: true },
+    { label: "New Enquiries", value: countOf("new"), icon: Inbox, trend: `+${stats.newToday} today`, up: stats.newToday > 0 },
+    { label: "Active Repairs", value: countOf("in_progress"), icon: Wrench },
+    { label: "Completed Today", value: stats.completedToday, icon: CheckCircle2, trend: `vs ${stats.completedYesterday} yesterday`, up: stats.completedToday >= stats.completedYesterday },
+    { label: "Awaiting Collection", value: countOf("ready_for_collection"), icon: Clock },
   ];
 
   const navItems: { icon: any; label: string; tab: Tab; count?: number }[] = [
     { icon: LayoutDashboard, label: "Overview", tab: "overview" },
-    { icon: Inbox, label: "Enquiries", tab: "enquiries", count: enquiries.filter(e => e.status === "new").length },
+    { icon: Inbox, label: "Enquiries", tab: "enquiries", count: countOf("new") },
     { icon: Wrench, label: "Active Repairs", tab: "active" },
     { icon: CheckCircle2, label: "Completed", tab: "completed" },
     { icon: Users, label: "Customers", tab: "customers" },
@@ -160,12 +185,14 @@ const Dashboard = () => {
 
   const formatPrice = (pence: number | null) => pence ? `£${(pence / 100).toFixed(0)}` : "TBC";
 
-  const filteredEnquiries = enquiries.filter(e => {
-    if (statusFilter !== "all" && e.status !== statusFilter) return false;
+  const filteredEnquiries = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return [e.guest_name, e.ref, e.device_model, e.guest_email].some(v => (v || "").toLowerCase().includes(q));
-  });
+    return enquiries.filter(e => {
+      if (statusFilter !== "all" && e.status !== statusFilter) return false;
+      if (!q) return true;
+      return [e.guest_name, e.ref, e.device_model, e.guest_email].some(v => (v || "").toLowerCase().includes(q));
+    });
+  }, [enquiries, search, statusFilter]);
 
   if (!user) return null;
 
@@ -361,7 +388,7 @@ const Dashboard = () => {
                 {/* Status tabs */}
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
                   {["all", "new", "confirmed", "in_progress", "ready_for_collection", "completed", "cancelled"].map(s => {
-                    const count = s === "all" ? enquiries.length : enquiries.filter(e => e.status === s).length;
+                    const count = s === "all" ? enquiries.length : countOf(s);
                     return (
                       <button
                         key={s}
@@ -531,10 +558,10 @@ const Dashboard = () => {
               <motion.div key="revenue" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.4, ease: customEase }}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                   {[
-                    { label: "This Month", value: formatPrice(enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).getMonth() === new Date().getMonth() && new Date(e.completed_at).getFullYear() === new Date().getFullYear()).reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0)) },
-                    { label: "Total Revenue", value: formatPrice(enquiries.filter(e => e.status === "completed").reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0)) },
-                    { label: "Avg Repair Value", value: enquiries.filter(e => e.status === "completed").length > 0 ? formatPrice(Math.round(enquiries.filter(e => e.status === "completed").reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0) / enquiries.filter(e => e.status === "completed").length)) : "£0" },
-                    { label: "Completed Repairs", value: enquiries.filter(e => e.status === "completed").length.toString() },
+                    { label: "This Month", value: formatPrice(stats.monthRevenue) },
+                    { label: "Total Revenue", value: formatPrice(stats.totalRevenue) },
+                    { label: "Avg Repair Value", value: stats.completedCount > 0 ? formatPrice(Math.round(stats.totalRevenue / stats.completedCount)) : "£0" },
+                    { label: "Completed Repairs", value: stats.completedCount.toString() },
                   ].map((stat, i) => (
                     <div key={stat.label} className="rounded-2xl p-6" style={{ backgroundColor: "#0F0F12", border: "1px solid rgba(255,255,255,0.05)" }}>
                       <p className="font-body text-[12px] text-steel/30">{stat.label}</p>

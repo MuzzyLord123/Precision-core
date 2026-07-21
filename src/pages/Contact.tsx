@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomCursor from "@/components/CustomCursor";
 import MobileCTA from "@/components/MobileCTA";
-import { supabase } from "@/integrations/supabase/client";
+import { createEnquiry, makeEnquiryRef } from "@/lib/enquiries";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -17,27 +17,28 @@ const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", device: "", repair: "", model: "", description: "", urgency: "this-week", source: "" });
-  const [refNum] = useState(() => `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  const [refNum] = useState(makeEnquiryRef);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
     setSubmitting(true);
     setSubmitError("");
-    const { error } = await supabase.from("enquiries").insert({
-      guest_name: form.name,
-      guest_email: form.email,
-      guest_phone: form.phone || null,
-      device_type: form.device,
-      device_model: form.model || null,
-      issue_description: `${form.description}\n\nRepair needed: ${form.repair}\nUrgency: ${form.urgency}`,
-      how_found_us: form.source || null,
+    const error = await createEnquiry({
+      kind: "contact",
       ref: refNum,
-      source: "contact_form",
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      device: form.device,
+      model: form.model,
+      repair: form.repair,
+      urgency: form.urgency,
+      notes: form.description,
+      source: form.source,
     });
     setSubmitting(false);
     if (error) {
-      setSubmitError("Something went wrong sending your enquiry. Please try again.");
+      setSubmitError(error);
       return;
     }
     setSubmitted(true);

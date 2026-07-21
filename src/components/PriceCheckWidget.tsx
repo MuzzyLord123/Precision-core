@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Smartphone, Tablet, Laptop, Monitor, Watch, Wrench } from "lucide-react";
+import { Smartphone, Tablet, Laptop, Monitor, Wrench } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { pricingData, isDeviceTab, isRepairColumn, lookupPrice, minPriceFor } from "@/lib/pricing";
+import { pricingData, lookupPrice, minPriceFor } from "@/lib/pricing";
 
 const devices = [
   { id: "iphone", label: "iPhone", Icon: Smartphone },
@@ -15,11 +15,7 @@ const devices = [
 ];
 
 const models: Record<string, string[]> = {
-  iphone: pricingData.iphone.map(r => r.model),
-  samsung: pricingData.samsung.map(r => r.model),
-  ipad: pricingData.ipad.map(r => r.model),
-  macbook: pricingData.macbook.map(r => r.model),
-  laptop: pricingData.laptop.map(r => r.model),
+  ...Object.fromEntries(Object.entries(pricingData).map(([tab, rows]) => [tab, rows.map(r => r.model)])),
   other: ["Apple Watch", "AirPods", "Gaming Console", "iMac"],
 };
 
@@ -38,10 +34,7 @@ const PriceCheckWidget = () => {
   const [repair, setRepair] = useState<string | null>(null);
 
   const selectedRepair = repairs.find(r => r.id === repair);
-  const lookedUp =
-    device && model && selectedRepair && isDeviceTab(device) && isRepairColumn(selectedRepair.id)
-      ? lookupPrice(device, model, selectedRepair.id)
-      : null;
+  const lookedUp = lookupPrice(device, model, selectedRepair?.id);
   const displayPrice = lookedUp ? lookedUp.amount : selectedRepair?.from;
   const isExact = lookedUp?.exact ?? false;
 

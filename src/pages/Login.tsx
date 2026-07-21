@@ -27,14 +27,13 @@ const Login = () => {
     setLoading(true);
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
 
     if (authError) {
       setError("Invalid email or password.");
-      setLoading(false);
       return;
     }
 
-    setLoading(false);
     navigate("/dashboard");
   };
 
