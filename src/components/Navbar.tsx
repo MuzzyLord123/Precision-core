@@ -159,7 +159,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile hamburger */}
-        <button className="lg:hidden text-foreground/50 w-10 h-10 flex items-center justify-center" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button className="lg:hidden text-foreground/50 w-10 h-10 flex items-center justify-center" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen}>
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </motion.nav>
@@ -236,7 +236,7 @@ const Navbar = () => {
               </Link>
               <a
                 href="tel:+441234567890"
-                className="font-body text-[14px] text-foreground/30 border border-foreground/6 rounded-xl h-[52px] flex items-center justify-center gap-2"
+                className="font-body text-[14px] text-foreground/30 border border-foreground/[0.06] rounded-xl h-[52px] flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" /> Call Us
               </a>

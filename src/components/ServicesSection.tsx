@@ -7,13 +7,13 @@ import SectionReveal from "./SectionReveal";
 const customEase = [0.22, 1, 0.36, 1] as const;
 
 const services = [
-  { icon: Smartphone, title: "Screen Replacement", desc: "Cracked, shattered, or unresponsive displays restored with OLED, LCD, and genuine panel options.", devices: "iPhone · Samsung · iPad · Laptops", price: "£49", href: "/repairs/screen-replacement" },
-  { icon: Battery, title: "Battery Replacement", desc: "Degraded, swollen, or fast-draining batteries replaced with OEM and premium-grade cells.", devices: "iPhone · Samsung · MacBook · Laptops", price: "£39", href: "/repairs/battery-replacement" },
+  { icon: Smartphone, title: "Screen Replacement", desc: "Cracked, shattered, or unresponsive displays restored with OLED, LCD, and genuine panel options.", devices: "iPhone · Samsung · iPad · Laptops", price: "£69", href: "/repairs/screen-replacement" },
+  { icon: Battery, title: "Battery Replacement", desc: "Degraded, swollen, or fast-draining batteries replaced with OEM and premium-grade cells.", devices: "iPhone · Samsung · MacBook · Laptops", price: "£45", href: "/repairs/battery-replacement" },
   { icon: Zap, title: "Charging Port Repair", desc: "Not charging, loose connection, bent pins — Lightning, USB-C, and MagSafe port repairs.", devices: "All devices", price: "£35", href: "/repairs/charging-port" },
   { icon: Camera, title: "Camera Repair", desc: "Front or rear camera replacement for cracked lens, autofocus failure, and blurry images.", devices: "iPhone · Samsung · iPad", price: "£59", href: "/repairs/camera-repair" },
   { icon: Droplets, title: "Water Damage Recovery", desc: "Ultrasonic cleaning, board-level repair, corrosion removal, and component restoration.", devices: "All devices", price: "£49", href: "/repairs/water-damage" },
   { icon: HardDrive, title: "Data Recovery", desc: "Professional recovery from deleted files, failed drives, and physically damaged devices.", devices: "All devices", price: "£59", href: "/repairs/data-recovery" },
-  { icon: Keyboard, title: "Keyboard & Trackpad", desc: "Key replacement, full keyboard swap, trackpad issues, butterfly and scissor mechanism fixes.", devices: "MacBook · Laptops", price: "£69", href: "/repairs/keyboard-repair" },
+  { icon: Keyboard, title: "Keyboard & Trackpad", desc: "Key replacement, full keyboard swap, trackpad issues, butterfly and scissor mechanism fixes.", devices: "MacBook · Laptops", price: "£89", href: "/repairs/keyboard-repair" },
   { icon: Monitor, title: "Software & Diagnostics", desc: "iOS/Android repairs, virus removal, factory reset, OS reinstall, and speed optimisation.", devices: "All devices", price: "£29", href: "/repairs/software-diagnostics" },
   { icon: Sparkles, title: "Full Restoration", desc: "Complete professional clean — battery, screen, ports. Full health check inside and out.", devices: "Premium service", price: "£99", href: "/repairs/full-restoration" },
 ];

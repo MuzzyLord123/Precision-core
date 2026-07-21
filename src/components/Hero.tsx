@@ -22,9 +22,10 @@ const ScrambleText = ({ text, delay: startDelay = 0 }: { text: string; delay?: n
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
     const timeout = setTimeout(() => {
       let iteration = 0;
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setDisplay(
           text.split("").map((char, i) => {
             if (char === " ") return " ";
@@ -35,9 +36,11 @@ const ScrambleText = ({ text, delay: startDelay = 0 }: { text: string; delay?: n
         iteration += 1 / 2;
         if (iteration >= text.length) clearInterval(interval);
       }, 30);
-      return () => clearInterval(interval);
     }, startDelay * 1000);
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
   }, [text, startDelay]);
 
   return <>{display}</>;
@@ -234,8 +237,8 @@ const Hero = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 3, duration: 0.5 }}
       >
-        <span className="font-mono text-[9px] text-foreground/12 tracking-[0.25em] uppercase">Explore</span>
-        <motion.div className="w-8 h-14 rounded-full border border-foreground/8 flex items-start justify-center pt-2">
+        <span className="font-mono text-[9px] text-foreground/[0.12] tracking-[0.25em] uppercase">Explore</span>
+        <motion.div className="w-8 h-14 rounded-full border border-foreground/[0.08] flex items-start justify-center pt-2">
           <motion.div
             className="w-1 h-3 rounded-full bg-primary/50"
             animate={{ y: [0, 16, 0], opacity: [1, 0.3, 1] }}

@@ -98,7 +98,7 @@ const BeforeAfterSlider = () => {
         >
           <div
             ref={sliderRef}
-            className="relative rounded-[28px] overflow-hidden cursor-col-resize select-none"
+            className="relative rounded-[28px] overflow-hidden cursor-col-resize select-none touch-none"
             style={{
               height: "clamp(300px, 50vw, 520px)",
               border: "1px solid hsl(var(--foreground) / 0.06)",
@@ -149,7 +149,22 @@ const BeforeAfterSlider = () => {
 
             {/* Slider handle */}
             <div
-              className="absolute top-0 bottom-0 w-[3px] z-20"
+              role="slider"
+              tabIndex={0}
+              aria-label="Before/after comparison"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(sliderPos)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  setSliderPos((p) => Math.max(0, p - 5));
+                } else if (e.key === "ArrowRight") {
+                  e.preventDefault();
+                  setSliderPos((p) => Math.min(100, p + 5));
+                }
+              }}
+              className="absolute top-0 bottom-0 w-[3px] z-20 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               style={{ left: `${sliderPos}%`, background: "hsl(var(--primary))", boxShadow: "0 0 20px hsl(var(--primary) / 0.4)" }}
             >
               <div

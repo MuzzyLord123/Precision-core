@@ -11,6 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,34 +29,29 @@ const Login = () => {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
-      if (authError.message.includes("Invalid login")) {
-        // Try to sign up first
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: "Owner" } },
-        });
-        if (signUpError) {
-          setError(signUpError.message);
-          setLoading(false);
-          return;
-        }
-        // Auto-confirmed, sign in again
-        const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
-        if (retryError) {
-          setError(retryError.message);
-          setLoading(false);
-          return;
-        }
-      } else {
-        setError(authError.message);
-        setLoading(false);
-        return;
-      }
+      setError("Invalid email or password.");
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
     navigate("/dashboard");
+  };
+
+  const handleForgotPassword = async () => {
+    setResetMessage("");
+    if (!email) {
+      setResetMessage("Please enter your email above first.");
+      return;
+    }
+    setResetLoading(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+    setResetLoading(false);
+    if (resetError) {
+      setResetMessage(resetError.message);
+      return;
+    }
+    setResetMessage("If an account exists for that email, a reset link has been sent.");
   };
 
   const inputClass =
@@ -153,7 +150,19 @@ const Login = () => {
               </button>
             </form>
 
-            <p className="font-body text-[12px] text-steel/15 text-center mt-8">Forgot password?</p>
+            <div className="text-center mt-8">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="font-body text-[12px] text-steel/15 hover:text-steel/40 transition-colors disabled:opacity-50"
+              >
+                {resetLoading ? "Sending reset link..." : "Forgot password?"}
+              </button>
+              {resetMessage && (
+                <p className="font-body text-[12px] text-steel/35 mt-2 leading-relaxed">{resetMessage}</p>
+              )}
+            </div>
           </div>
 
           <div className="text-center mt-8">

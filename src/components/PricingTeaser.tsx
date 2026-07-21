@@ -8,8 +8,8 @@ const customEase = [0.22, 1, 0.36, 1] as const;
 
 const cards = [
   { device: "iPhone 15 Pro Max", repair: "Screen Replacement", price: "229", time: "45 mins", tag: "Most Popular", featured: false },
-  { device: "MacBook Pro 14\"", repair: "Battery Replacement", price: "189", time: "2–3 hours", tag: "Premium", featured: true },
-  { device: "Samsung Galaxy S24 Ultra", repair: "Screen Replacement", price: "199", time: "60 mins", tag: "Trending", featured: false },
+  { device: "MacBook Pro 14\"", repair: "Battery Replacement", price: "229", time: "2–3 hours", tag: "Premium", featured: true },
+  { device: "Samsung Galaxy S24 Ultra", repair: "Screen Replacement", price: "259", time: "50 mins", tag: "Trending", featured: false },
 ];
 
 const PricingTeaser = () => {

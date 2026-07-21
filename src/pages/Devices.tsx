@@ -191,7 +191,7 @@ const allDevices = [
     repairs: 3,
     repairTypes: [
       { name: "Battery Replacement", price: "£49", slug: "battery-replacement" },
-      { name: "Charging Case Repair", price: "£39", slug: "charging-port" },
+      { name: "Charging Case Repair", price: "£39", slug: "" },
       { name: "Software & Diagnostics", price: "£19", slug: "software-diagnostics" },
     ],
     commonIssues: [
@@ -208,10 +208,10 @@ const allDevices = [
     models: ["PlayStation 5", "PlayStation 5 Digital", "PlayStation 4 Pro", "PlayStation 4", "Xbox Series X", "Xbox Series S", "Nintendo Switch OLED", "Nintendo Switch", "Nintendo Switch Lite", "Steam Deck"],
     repairs: 5,
     repairTypes: [
-      { name: "HDMI Port Repair", price: "£69", slug: "charging-port" },
-      { name: "Disc Drive Repair", price: "£59", slug: "full-restoration" },
-      { name: "Overheating / Thermal Service", price: "£49", slug: "software-diagnostics" },
-      { name: "Controller Drift Fix", price: "£29", slug: "software-diagnostics" },
+      { name: "HDMI Port Repair", price: "£69", slug: "" },
+      { name: "Disc Drive Repair", price: "£59", slug: "" },
+      { name: "Overheating / Thermal Service", price: "£49", slug: "" },
+      { name: "Controller Drift Fix", price: "£29", slug: "" },
       { name: "Data Recovery", price: "£59", slug: "data-recovery" },
     ],
     commonIssues: [
@@ -349,7 +349,7 @@ const DeviceDetail = ({ slug }: { slug: string }) => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {device.repairTypes.map((r, i) => (
                 <motion.div key={r.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05, duration: 0.5, ease: customEase }}>
-                  <Link to={`/repairs/${r.slug}`} className="group block rounded-[16px] p-6 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}>
+                  <Link to={r.slug ? `/repairs/${r.slug}` : "/book"} className="group block rounded-[16px] p-6 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden" style={{ backgroundColor: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}>
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-signal-red origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                     <h3 className="font-body text-[15px] font-semibold mb-2" style={{ color: "#080809" }}>{r.name}</h3>
                     <div className="flex items-center justify-between">

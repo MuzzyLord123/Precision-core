@@ -22,8 +22,8 @@ const Counter = ({ target, suffix = "", decimal = false, inView }: { target: num
 };
 
 const stats = [
-  { value: 12847, suffix: "+", label: "Devices Repaired", sublabel: "Since 2020" },
-  { value: 4.9, suffix: "", label: "Average Rating", sublabel: "2,400+ reviews", decimal: true },
+  { value: 2400, suffix: "+", label: "Devices Repaired", sublabel: "Since 2020" },
+  { value: 4.9, suffix: "", label: "Average Rating", sublabel: "Google reviews", decimal: true },
   { value: 98, suffix: "%", label: "Same Day Completion", sublabel: "Walk-in repairs" },
   { value: 45, suffix: "min", label: "Average Repair Time", sublabel: "Screen replacements" },
   { value: 12, suffix: "mo", label: "Warranty Period", sublabel: "Parts & labour" },

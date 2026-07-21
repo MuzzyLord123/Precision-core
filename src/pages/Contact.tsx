@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomCursor from "@/components/CustomCursor";
 import MobileCTA from "@/components/MobileCTA";
+import { supabase } from "@/integrations/supabase/client";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -13,14 +14,34 @@ const repairOptions = ["Screen Replacement", "Battery Replacement", "Charging Po
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", device: "", repair: "", model: "", description: "", urgency: "this-week", source: "" });
+  const [refNum] = useState(() => `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError("");
+    const { error } = await supabase.from("enquiries").insert({
+      guest_name: form.name,
+      guest_email: form.email,
+      guest_phone: form.phone || null,
+      device_type: form.device,
+      device_model: form.model || null,
+      issue_description: `${form.description}\n\nRepair needed: ${form.repair}\nUrgency: ${form.urgency}`,
+      how_found_us: form.source || null,
+      ref: refNum,
+      source: "contact_form",
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError("Something went wrong sending your enquiry. Please try again.");
+      return;
+    }
     setSubmitted(true);
   };
-
-  const refNum = `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   const inputClass = "w-full rounded-xl px-4 py-4 font-body text-[14px] transition-all outline-none border focus:border-signal-red focus:ring-2 focus:ring-signal-red/10 bg-graphite-control border-steel/[0.06] text-steel placeholder:text-steel/20";
 
   return (
@@ -74,10 +95,13 @@ const Contact = () => {
                       </div>
                     </div>
                     <input placeholder="How did you hear about us?" value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))} className={inputClass} />
-                    <button type="submit" className="group w-full relative overflow-hidden font-body font-semibold text-[15px] rounded-[14px] h-[56px] text-steel mt-4 transition-all" style={{ background: "linear-gradient(135deg, #CC2936 0%, #a82230 100%)", boxShadow: "0 8px 32px rgba(204,41,54,0.2)" }} data-cursor="cta">
-                      <span className="relative z-10">Send Enquiry</span>
+                    <button type="submit" disabled={submitting} className="group w-full relative overflow-hidden font-body font-semibold text-[15px] rounded-[14px] h-[56px] text-steel mt-4 transition-all disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "linear-gradient(135deg, #CC2936 0%, #a82230 100%)", boxShadow: "0 8px 32px rgba(204,41,54,0.2)" }} data-cursor="cta">
+                      <span className="relative z-10">{submitting ? "Sending…" : "Send Enquiry"}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                     </button>
+                    {submitError && (
+                      <p className="font-body text-[13px] text-signal-red mt-3 text-center">{submitError}</p>
+                    )}
                   </form>
                 ) : (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20">
@@ -105,7 +129,7 @@ const Contact = () => {
                     <div className="space-y-3">
                       <a href="tel:+441234567890" className="block font-mono text-[20px] text-signal-red hover:text-signal-red/80 transition-colors">01234 567 890</a>
                       <a href="mailto:hello@mobimedic.co.uk" className="block font-body text-[13px] text-steel/35 hover:text-steel/60 transition-colors">hello@mobimedic.co.uk</a>
-                      <a href="https://wa.me/441234567890" className="inline-flex items-center gap-2 font-body text-[12px] text-steel/50 px-4 py-2.5 rounded-xl border border-steel/[0.06] hover:border-green-500/20 hover:text-green-400 transition-all">💬 WhatsApp</a>
+                      <a href="https://wa.me/441234567890" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-body text-[12px] text-steel/50 px-4 py-2.5 rounded-xl border border-steel/[0.06] hover:border-green-500/20 hover:text-green-400 transition-all">💬 WhatsApp</a>
                     </div>
                   )}
                 ].map(({ label, content }) => (

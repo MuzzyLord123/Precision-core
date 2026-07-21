@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomCursor from "@/components/CustomCursor";
 import MobileCTA from "@/components/MobileCTA";
+import { supabase } from "@/integrations/supabase/client";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -56,14 +57,46 @@ const Book = () => {
   const [source, setSource] = useState("");
   const [gdpr, setGdpr] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [refNum] = useState(() => `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const canNext = () => {
     if (step === 1) return !!device;
     if (step === 2) return !!model;
     if (step === 3) return selectedRepairs.length > 0;
-    if (step === 4) return isWalkIn || (!!date && !!timeSlot);
+    if (step === 4) return isWalkIn || (!!date && !!timeSlot && date >= todayStr);
     if (step === 5) return !!name && !!email && !!phone && gdpr;
     return true;
+  };
+
+  const handleConfirm = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError("");
+    const { error } = await supabase.from("enquiries").insert({
+      guest_name: name,
+      guest_email: email,
+      guest_phone: phone,
+      device_type: device,
+      device_model: model,
+      repairs_requested: selectedRepairs,
+      booked_date: isWalkIn ? null : date,
+      booked_time: isWalkIn ? null : timeSlot,
+      is_walk_in: isWalkIn,
+      issue_description: extraInfo || null,
+      how_found_us: source || null,
+      ref: refNum,
+      source: "booking_flow",
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError("Something went wrong submitting your booking. Please try again.");
+      return;
+    }
+    setConfirmed(true);
   };
 
   const toggleRepair = (id: string) => {
@@ -71,7 +104,6 @@ const Book = () => {
   };
 
   const inputClass = "w-full rounded-xl px-4 py-4 font-body text-[14px] transition-all outline-none border focus:border-signal-red focus:ring-2 focus:ring-signal-red/10 bg-graphite-control border-steel/[0.06] text-steel placeholder:text-steel/20";
-  const refNum = `MBM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
   if (confirmed) {
     return (
@@ -178,15 +210,15 @@ const Book = () => {
               {step === 4 && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.4, ease: customEase }}>
                   <h2 className="font-display font-extralight text-[32px] md:text-[48px] text-steel mb-10 tracking-[-0.02em]">When would you like to come in?</h2>
-                  <label className="flex items-center gap-3 mb-8 cursor-pointer">
-                    <div onClick={() => setIsWalkIn(!isWalkIn)} className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isWalkIn ? "bg-signal-red" : "bg-steel/8"}`}>
+                  <button type="button" role="switch" aria-checked={isWalkIn} onClick={() => setIsWalkIn(!isWalkIn)} className="flex items-center gap-3 mb-8 cursor-pointer">
+                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isWalkIn ? "bg-signal-red" : "bg-steel/8"}`}>
                       <div className={`w-5 h-5 rounded-full absolute top-0.5 transition-all duration-300 ${isWalkIn ? "left-6 bg-steel" : "left-0.5 bg-steel/30"}`} />
                     </div>
                     <span className="font-body text-[14px] text-steel/60">I'll just walk in</span>
-                  </label>
+                  </button>
                   {!isWalkIn && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                      <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
+                      <input type="date" min={todayStr} value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
                       <div className="grid grid-cols-3 gap-3">
                         {[{ id: "morning", label: "Morning", time: "9–12" }, { id: "afternoon", label: "Afternoon", time: "12–4" }, { id: "evening", label: "Evening", time: "4–6" }].map(t => (
                           <button key={t.id} onClick={() => setTimeSlot(t.id)} className={`rounded-xl p-5 text-center transition-all duration-300 border ${timeSlot === t.id ? "border-signal-red" : "border-steel/[0.06]"}`} style={timeSlot === t.id ? { background: "linear-gradient(135deg, rgba(204,41,54,0.1) 0%, rgba(204,41,54,0.03) 100%)" } : { background: "rgba(255,255,255,0.02)" }}>
@@ -251,16 +283,20 @@ const Book = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => setConfirmed(true)}
-                  className="group relative overflow-hidden font-body font-semibold text-[14px] rounded-xl h-[52px] px-10 text-steel transition-all"
+                  disabled={submitting}
+                  onClick={handleConfirm}
+                  className="group relative overflow-hidden font-body font-semibold text-[14px] rounded-xl h-[52px] px-10 text-steel transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: "linear-gradient(135deg, #CC2936 0%, #a82230 100%)", boxShadow: "0 8px 32px rgba(204,41,54,0.25)" }}
                   data-cursor="cta"
                 >
-                  <span className="relative z-10">Confirm Booking</span>
+                  <span className="relative z-10">{submitting ? "Submitting…" : "Confirm Booking"}</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                 </button>
               )}
             </div>
+            {submitError && (
+              <p className="font-body text-[13px] text-signal-red mt-4 text-right">{submitError}</p>
+            )}
           </div>
         </div>
       </main>

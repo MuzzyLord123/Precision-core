@@ -97,10 +97,10 @@ const Testimonials = () => {
 
           {/* Nav arrows */}
           <div className="flex gap-2 mt-4 justify-end">
-            <button onClick={() => setFeatured((f) => (f - 1 + reviews.length) % reviews.length)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: "1px solid hsl(var(--foreground) / 0.06)" }}>
+            <button onClick={() => setFeatured((f) => (f - 1 + reviews.length) % reviews.length)} aria-label="Previous review" className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: "1px solid hsl(var(--foreground) / 0.06)" }}>
               <ChevronLeft className="w-4 h-4 text-foreground/30" />
             </button>
-            <button onClick={() => setFeatured((f) => (f + 1) % reviews.length)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: "1px solid hsl(var(--foreground) / 0.06)" }}>
+            <button onClick={() => setFeatured((f) => (f + 1) % reviews.length)} aria-label="Next review" className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: "1px solid hsl(var(--foreground) / 0.06)" }}>
               <ChevronRight className="w-4 h-4 text-foreground/30" />
             </button>
           </div>
@@ -108,7 +108,7 @@ const Testimonials = () => {
           {/* Progress dots */}
           <div className="flex gap-2 justify-center mt-4">
             {reviews.map((_, i) => (
-              <button key={i} onClick={() => setFeatured(i)} className="relative w-8 h-1 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
+              <button key={i} onClick={() => setFeatured(i)} aria-label={`Go to review ${i + 1}`} className="relative w-8 h-1 rounded-full overflow-hidden" style={{ background: "hsl(var(--foreground) / 0.06)" }}>
                 {featured === i && (
                   <motion.div className="absolute inset-0 bg-primary rounded-full" layoutId="review-dot" transition={{ type: "spring", stiffness: 300, damping: 25 }} />
                 )}

@@ -94,7 +94,7 @@ const PageLoadAnimation = ({ onComplete }: { onComplete: () => void }) => {
           {/* Tagline */}
           {phase >= 3 && (
             <motion.span
-              className="absolute font-mono text-[9px] text-foreground/12 tracking-[0.35em] uppercase"
+              className="absolute font-mono text-[9px] text-foreground/[0.12] tracking-[0.35em] uppercase"
               style={{ top: "58%" }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

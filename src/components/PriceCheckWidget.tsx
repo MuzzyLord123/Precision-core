@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Smartphone, Tablet, Laptop, Monitor, Watch, Wrench } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { pricingData, isDeviceTab, isRepairColumn, lookupPrice, minPriceFor } from "@/lib/pricing";
 
 const devices = [
   { id: "iphone", label: "iPhone", Icon: Smartphone },
@@ -13,21 +15,21 @@ const devices = [
 ];
 
 const models: Record<string, string[]> = {
-  iphone: ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14", "iPhone 13 Pro Max", "iPhone 13", "iPhone 12", "iPhone 11"],
-  samsung: ["Galaxy S24 Ultra", "Galaxy S24+", "Galaxy S24", "Galaxy S23 Ultra", "Galaxy S23", "Galaxy A54", "Galaxy A34"],
-  ipad: ["iPad Pro 12.9\"", "iPad Pro 11\"", "iPad Air", "iPad Mini", "iPad 10th Gen"],
-  macbook: ["MacBook Pro 16\"", "MacBook Pro 14\"", "MacBook Air 15\"", "MacBook Air 13\""],
-  laptop: ["HP", "Dell", "Lenovo", "ASUS", "Acer", "Other"],
+  iphone: pricingData.iphone.map(r => r.model),
+  samsung: pricingData.samsung.map(r => r.model),
+  ipad: pricingData.ipad.map(r => r.model),
+  macbook: pricingData.macbook.map(r => r.model),
+  laptop: pricingData.laptop.map(r => r.model),
   other: ["Apple Watch", "AirPods", "Gaming Console", "iMac"],
 };
 
 const repairs = [
-  { id: "screen", label: "Screen", price: 79, icon: "◻" },
-  { id: "battery", label: "Battery", price: 49, icon: "⊕" },
-  { id: "port", label: "Port", price: 45, icon: "⏚" },
-  { id: "camera", label: "Camera", price: 69, icon: "◎" },
-  { id: "water", label: "Water", price: 59, icon: "◈" },
-  { id: "other", label: "Other", price: 39, icon: "✧" },
+  { id: "screen", label: "Screen", from: minPriceFor("screen"), icon: "◻" },
+  { id: "battery", label: "Battery", from: minPriceFor("battery"), icon: "⊕" },
+  { id: "port", label: "Port", from: minPriceFor("port"), icon: "⏚" },
+  { id: "camera", label: "Camera", from: minPriceFor("camera"), icon: "◎" },
+  { id: "water", label: "Water", from: 49, icon: "◈" },
+  { id: "other", label: "Other", from: 29, icon: "✧" },
 ];
 
 const PriceCheckWidget = () => {
@@ -36,6 +38,12 @@ const PriceCheckWidget = () => {
   const [repair, setRepair] = useState<string | null>(null);
 
   const selectedRepair = repairs.find(r => r.id === repair);
+  const lookedUp =
+    device && model && selectedRepair && isDeviceTab(device) && isRepairColumn(selectedRepair.id)
+      ? lookupPrice(device, model, selectedRepair.id)
+      : null;
+  const displayPrice = lookedUp ? lookedUp.amount : selectedRepair?.from;
+  const isExact = lookedUp?.exact ?? false;
 
   return (
     <motion.div
@@ -155,22 +163,23 @@ const PriceCheckWidget = () => {
             >
               <div className="flex items-end gap-2 mb-1">
                 <span className="font-mono text-[42px] text-signal-red font-medium leading-none">
-                  £{selectedRepair.price}
+                  £{displayPrice}
                 </span>
-                <span className="font-mono text-[14px] text-steel/30 pb-1">from</span>
+                {!isExact && <span className="font-mono text-[14px] text-steel/30 pb-1">from</span>}
               </div>
               <div className="flex gap-4 mt-3">
                 <span className="font-mono text-[12px] text-steel/40">⏱ 30–60 mins</span>
                 <span className="font-mono text-[12px] text-steel/20">✓ 12-month warranty</span>
               </div>
-              <button
-                className="mt-5 w-full relative overflow-hidden group rounded-xl h-[48px] font-body font-semibold text-[14px] text-steel transition-all"
+              <Link
+                to="/book"
+                className="mt-5 w-full relative overflow-hidden group rounded-xl h-[48px] flex items-center justify-center font-body font-semibold text-[14px] text-steel transition-all"
                 style={{ background: "linear-gradient(135deg, #CC2936 0%, #a82230 100%)" }}
                 data-cursor="cta"
               >
                 <span className="relative z-10">Book This Repair →</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-              </button>
+              </Link>
             </motion.div>
           )}
         </AnimatePresence>

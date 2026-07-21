@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams, useLocation, useNavigationType } from "react-router-dom";
+import { useLayoutEffect } from "react";
 import Index from "./pages/Index";
 import { RepairsIndex, RepairDetail } from "./pages/Repairs";
 import { DevicesIndex, DeviceDetail } from "./pages/Devices";
@@ -20,6 +21,29 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const ScrollToTop = () => {
+  const { pathname, hash } = useLocation();
+  const navigationType = useNavigationType();
+
+  useLayoutEffect(() => {
+    if (hash) {
+      const target = document.querySelector(hash);
+      if (target) {
+        target.scrollIntoView();
+        return;
+      }
+    }
+    // Let the browser restore scroll on back/forward; reset to top otherwise.
+    // "instant" overrides the global `scroll-behavior: smooth` so the new page
+    // starts at the top immediately instead of animating up from the bottom.
+    if (navigationType !== "POP") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [pathname, hash, navigationType]);
+
+  return null;
+};
+
 const RepairDetailPage = () => {
   const { slug } = useParams();
   return <RepairDetail slug={slug || ""} />;
@@ -36,6 +60,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/repairs" element={<RepairsIndex />} />

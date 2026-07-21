@@ -63,7 +63,7 @@ const Footer = () => {
               <ArrowUpRight className="w-4 h-4 relative z-10" />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
             </Link>
-            <a href="tel:+441234567890" className="font-body text-[14px] text-foreground/30 border border-foreground/6 rounded-xl h-[50px] px-6 flex items-center gap-2 hover:text-foreground/50 transition-colors">
+            <a href="tel:+441234567890" className="font-body text-[14px] text-foreground/30 border border-foreground/[0.06] rounded-xl h-[50px] px-6 flex items-center gap-2 hover:text-foreground/50 transition-colors">
               <Phone className="w-4 h-4" /> Call
             </a>
           </div>
@@ -87,15 +87,15 @@ const Footer = () => {
             <div className="space-y-3.5 mb-8">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                <p className="font-mono text-[11px] text-foreground/18 leading-relaxed">Guilden Sutton<br />Chester, CH3</p>
+                <p className="font-mono text-[11px] text-foreground/[0.18] leading-relaxed">Guilden Sutton<br />Chester, CH3</p>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-primary/30 flex-shrink-0" strokeWidth={1.5} />
-                <a href="tel:+441234567890" className="font-mono text-[11px] text-foreground/18 hover:text-foreground/35 transition-colors">01234 567 890</a>
+                <a href="tel:+441234567890" className="font-mono text-[11px] text-foreground/[0.18] hover:text-foreground/35 transition-colors">01234 567 890</a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-primary/30 flex-shrink-0" strokeWidth={1.5} />
-                <a href="mailto:hello@mobimedic.co.uk" className="font-mono text-[11px] text-foreground/18 hover:text-foreground/35 transition-colors">hello@mobimedic.co.uk</a>
+                <a href="mailto:hello@mobimedic.co.uk" className="font-mono text-[11px] text-foreground/[0.18] hover:text-foreground/35 transition-colors">hello@mobimedic.co.uk</a>
               </div>
               <div className="flex items-start gap-2.5">
                 <Clock className="w-4 h-4 text-primary/30 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
@@ -110,9 +110,9 @@ const Footer = () => {
 
           {/* Repairs */}
           <div>
-            <span className="font-mono text-[9px] text-foreground/18 tracking-[0.2em] uppercase block mb-6">Repairs</span>
+            <span className="font-mono text-[9px] text-foreground/[0.18] tracking-[0.2em] uppercase block mb-6">Repairs</span>
             {repairLinks.map((l) => (
-              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/18 hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
+              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/[0.18] hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
                 {l.label}
               </Link>
             ))}
@@ -120,9 +120,9 @@ const Footer = () => {
 
           {/* Devices */}
           <div>
-            <span className="font-mono text-[9px] text-foreground/18 tracking-[0.2em] uppercase block mb-6">Devices</span>
+            <span className="font-mono text-[9px] text-foreground/[0.18] tracking-[0.2em] uppercase block mb-6">Devices</span>
             {deviceLinks.map((l) => (
-              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/18 hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
+              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/[0.18] hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
                 {l.label}
               </Link>
             ))}
@@ -130,9 +130,9 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <span className="font-mono text-[9px] text-foreground/18 tracking-[0.2em] uppercase block mb-6">Company</span>
+            <span className="font-mono text-[9px] text-foreground/[0.18] tracking-[0.2em] uppercase block mb-6">Company</span>
             {companyLinks.map((l) => (
-              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/18 hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
+              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/[0.18] hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
                 {l.label}
               </Link>
             ))}
@@ -140,9 +140,9 @@ const Footer = () => {
 
           {/* Help */}
           <div>
-            <span className="font-mono text-[9px] text-foreground/18 tracking-[0.2em] uppercase block mb-6">Help</span>
+            <span className="font-mono text-[9px] text-foreground/[0.18] tracking-[0.2em] uppercase block mb-6">Help</span>
             {helpLinks.map((l) => (
-              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/18 hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
+              <Link key={l.label} to={l.href} className="block font-body text-[12px] text-foreground/[0.18] hover:text-foreground/40 transition-colors duration-200 mb-3 leading-relaxed">
                 {l.label}
               </Link>
             ))}
@@ -150,8 +150,8 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-8 flex flex-wrap gap-6 justify-center font-mono text-[9px] text-foreground/8 tracking-wide" style={{ borderTop: "1px solid hsl(var(--foreground) / 0.03)" }}>
-          <span>© 2025 MobiMedic. All rights reserved.</span>
+        <div className="pt-8 pb-28 lg:pb-8 flex flex-wrap gap-6 justify-center font-mono text-[9px] text-foreground/[0.08] tracking-wide" style={{ borderTop: "1px solid hsl(var(--foreground) / 0.03)" }}>
+          <span>© {new Date().getFullYear()} MobiMedic. All rights reserved.</span>
           <span>Guilden Sutton, Chester</span>
           <Link to="/privacy" className="hover:text-foreground/20 transition-colors">Privacy</Link>
           <Link to="/terms" className="hover:text-foreground/20 transition-colors">Terms</Link>

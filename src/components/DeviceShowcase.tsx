@@ -45,7 +45,7 @@ const DeviceShowcase = () => {
     <SectionReveal className="relative overflow-hidden" style={{ backgroundColor: "hsl(var(--background))" }}>
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={devicesShowcase} alt="" className="w-full h-full object-cover opacity-8" />
+        <img src={devicesShowcase} alt="" className="w-full h-full object-cover opacity-[0.08]" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.6) 50%, hsl(var(--background)) 100%)" }} />
       </div>
       <div className="absolute inset-0 grain" />

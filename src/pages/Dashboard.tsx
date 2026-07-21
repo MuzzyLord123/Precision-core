@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
-  LayoutDashboard, Inbox, Wrench, CheckCircle2, Users, DollarSign, Settings, LogOut, Bell, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Smartphone, Monitor, Tablet, Watch, Headphones, Gamepad2, Search, Filter, Eye, MessageSquare, Trash2, X, Plus
+  LayoutDashboard, Inbox, Wrench, CheckCircle2, Users, DollarSign, Settings, LogOut, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Smartphone, Monitor, Tablet, Watch, Headphones, Gamepad2, Search, Eye, Trash2, X, Plus
 } from "lucide-react";
 
 const customEase = [0.22, 1, 0.36, 1] as const;
@@ -36,6 +37,10 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [shopInfo, setShopInfo] = useState({ shop_name: "MobiMedic", address: "Guilden Sutton, Chester", phone: "+44 1234 567890", email: "hello@mobimedic.co.uk" });
+  const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,6 +80,21 @@ const Dashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await supabase.from("business_settings").select("shop_name, address, phone, email").eq("id", 1).single();
+      if (data) {
+        setShopInfo(prev => ({
+          shop_name: data.shop_name ?? prev.shop_name,
+          address: data.address ?? prev.address,
+          phone: data.phone ?? prev.phone,
+          email: data.email ?? prev.email,
+        }));
+      }
+    };
+    loadSettings();
+  }, []);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/login");
@@ -87,10 +107,16 @@ const Dashboard = () => {
     return "Good evening";
   };
 
-  const kpis = [
-    { label: "New Enquiries", value: enquiries.filter(e => e.status === "new").length, icon: Inbox, trend: "+3 today", up: true },
-    { label: "Active Repairs", value: enquiries.filter(e => e.status === "in_progress").length, icon: Wrench, trend: "2 in progress", up: true },
-    { label: "Completed Today", value: enquiries.filter(e => e.status === "completed" && new Date(e.completed_at).toDateString() === new Date().toDateString()).length, icon: CheckCircle2, trend: "vs 4 yesterday", up: false },
+  const todayStr = new Date().toDateString();
+  const yesterdayStr = new Date(Date.now() - 86400000).toDateString();
+  const newToday = enquiries.filter(e => new Date(e.created_at).toDateString() === todayStr).length;
+  const completedToday = enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).toDateString() === todayStr).length;
+  const completedYesterday = enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).toDateString() === yesterdayStr).length;
+
+  const kpis: { label: string; value: number; icon: any; trend?: string; up?: boolean }[] = [
+    { label: "New Enquiries", value: enquiries.filter(e => e.status === "new").length, icon: Inbox, trend: `+${newToday} today`, up: newToday > 0 },
+    { label: "Active Repairs", value: enquiries.filter(e => e.status === "in_progress").length, icon: Wrench },
+    { label: "Completed Today", value: completedToday, icon: CheckCircle2, trend: `vs ${completedYesterday} yesterday`, up: completedToday >= completedYesterday },
     { label: "Awaiting Collection", value: enquiries.filter(e => e.status === "ready_for_collection").length, icon: Clock, trend: "devices ready", up: true },
   ];
 
@@ -110,12 +136,36 @@ const Dashboard = () => {
     if (newStatus === "completed") updates.completed_at = new Date().toISOString();
     if (newStatus === "ready_for_collection") updates.collected_at = null;
 
-    await supabase.from("enquiries").update(updates).eq("id", id);
+    const { error } = await supabase.from("enquiries").update(updates).eq("id", id);
+    if (error) {
+      toast.error(`Failed to update status: ${error.message}`);
+      return;
+    }
     setEnquiries(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     if (selectedEnquiry?.id === id) setSelectedEnquiry((prev: any) => ({ ...prev, ...updates }));
   };
 
+  const saveShopInfo = async () => {
+    setSavingSettings(true);
+    const { error } = await supabase.from("business_settings").update({
+      shop_name: shopInfo.shop_name,
+      address: shopInfo.address,
+      phone: shopInfo.phone,
+      email: shopInfo.email,
+    }).eq("id", 1);
+    setSavingSettings(false);
+    if (error) toast.error(`Failed to save shop information: ${error.message}`);
+    else toast.success("Shop information saved.");
+  };
+
   const formatPrice = (pence: number | null) => pence ? `£${(pence / 100).toFixed(0)}` : "TBC";
+
+  const filteredEnquiries = enquiries.filter(e => {
+    if (statusFilter !== "all" && e.status !== statusFilter) return false;
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return [e.guest_name, e.ref, e.device_model, e.guest_email].some(v => (v || "").toLowerCase().includes(q));
+  });
 
   if (!user) return null;
 
@@ -135,7 +185,7 @@ const Dashboard = () => {
               <span className="font-display text-[18px] font-light text-signal-red">MEDIC</span>
             </motion.div>
           )}
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="ml-auto text-steel/20 hover:text-steel/40 transition-colors">
+          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"} className="ml-auto text-steel/20 hover:text-steel/40 transition-colors">
             <ChevronRight className={`w-4 h-4 transition-transform ${sidebarCollapsed ? "" : "rotate-180"}`} />
           </button>
         </div>
@@ -201,12 +251,6 @@ const Dashboard = () => {
         <div className="h-16 flex items-center justify-between px-6 border-b border-white/[0.04] flex-shrink-0" style={{ backgroundColor: "#080809" }}>
           <h2 className="font-display text-[20px] font-light text-steel">{navItems.find(n => n.tab === tab)?.label}</h2>
           <div className="flex items-center gap-4">
-            <button className="relative text-steel/25 hover:text-steel/50 transition-colors">
-              <Bell className="w-5 h-5" />
-              {enquiries.filter(e => e.status === "new").length > 0 && (
-                <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-signal-red rounded-full" />
-              )}
-            </button>
             <span className="font-mono text-[11px] text-steel/25">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}</span>
             <div className="w-8 h-8 rounded-full bg-signal-red flex items-center justify-center">
               <span className="font-mono text-[11px] text-white font-semibold">{profile?.full_name?.[0] || "O"}</span>
@@ -240,10 +284,12 @@ const Dashboard = () => {
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(204,41,54,0.08)" }}>
                           <kpi.icon className="w-5 h-5 text-signal-red" />
                         </div>
-                        <div className={`flex items-center gap-1 font-mono text-[11px] ${kpi.up ? "text-green-400" : "text-steel/25"}`}>
-                          {kpi.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                          {kpi.trend}
-                        </div>
+                        {kpi.trend && (
+                          <div className={`flex items-center gap-1 font-mono text-[11px] ${kpi.up ? "text-green-400" : "text-steel/25"}`}>
+                            {kpi.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                            {kpi.trend}
+                          </div>
+                        )}
                       </div>
                       <p className="font-mono text-[36px] text-steel font-light">{kpi.value}</p>
                       <p className="font-body text-[12px] text-steel/30 mt-1">{kpi.label}</p>
@@ -288,14 +334,11 @@ const Dashboard = () => {
                 <div className="flex items-center gap-3 mb-6">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-steel/20" />
-                    <input className="w-full pl-10 pr-4 py-3 rounded-xl font-body text-[13px] text-steel placeholder:text-steel/20 outline-none" style={{ backgroundColor: "#0F0F12", border: "1px solid rgba(255,255,255,0.05)" }} placeholder="Search name, device, ref..." />
+                    <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl font-body text-[13px] text-steel placeholder:text-steel/20 outline-none" style={{ backgroundColor: "#0F0F12", border: "1px solid rgba(255,255,255,0.05)" }} placeholder="Search name, device, ref..." />
                   </div>
-                  <button className="flex items-center gap-2 px-4 py-3 rounded-xl font-body text-[12px] text-steel/30 hover:text-steel/50 transition-colors" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
-                    <Filter className="w-4 h-4" /> Filters
-                  </button>
                   <button
                     onClick={async () => {
-                      const { data } = await supabase.from("enquiries").insert({
+                      const { data, error } = await supabase.from("enquiries").insert({
                         guest_name: "Demo Customer",
                         guest_email: "demo@example.com",
                         guest_phone: "+44 7700 900000",
@@ -306,7 +349,8 @@ const Dashboard = () => {
                         status: "new",
                         estimated_price_pence: 22900,
                       }).select().single();
-                      if (data) setEnquiries(prev => [data, ...prev]);
+                      if (error) toast.error(`Failed to add enquiry: ${error.message}`);
+                      else if (data) setEnquiries(prev => [data, ...prev]);
                     }}
                     className="flex items-center gap-2 px-4 py-3 rounded-xl font-body text-[12px] text-white bg-signal-red hover:bg-signal-red/90 transition-colors"
                   >
@@ -319,7 +363,12 @@ const Dashboard = () => {
                   {["all", "new", "confirmed", "in_progress", "ready_for_collection", "completed", "cancelled"].map(s => {
                     const count = s === "all" ? enquiries.length : enquiries.filter(e => e.status === s).length;
                     return (
-                      <button key={s} className={`px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all whitespace-nowrap ${count === 0 && s !== "all" ? "opacity-30" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "#94A3B8" }}>
+                      <button
+                        key={s}
+                        onClick={() => setStatusFilter(s)}
+                        className={`px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all whitespace-nowrap ${count === 0 && s !== "all" && statusFilter !== s ? "opacity-30" : ""}`}
+                        style={statusFilter === s ? { backgroundColor: "rgba(204,41,54,0.12)", color: "#CC2936" } : { backgroundColor: "rgba(255,255,255,0.03)", color: "#94A3B8" }}
+                      >
                         {s === "all" ? "All" : statusLabels[s]} <span className="ml-1 opacity-50">{count}</span>
                       </button>
                     );
@@ -333,6 +382,11 @@ const Dashboard = () => {
                       <p className="font-display text-[26px] text-steel/15 italic mb-2">No enquiries yet.</p>
                       <p className="font-body text-[13px] text-steel/15">Click "Add Demo Enquiry" to create sample data.</p>
                     </div>
+                  ) : filteredEnquiries.length === 0 ? (
+                    <div className="p-16 text-center">
+                      <p className="font-display text-[26px] text-steel/15 italic mb-2">No matching enquiries.</p>
+                      <p className="font-body text-[13px] text-steel/15">Try a different search or status filter.</p>
+                    </div>
                   ) : (
                     <table className="w-full">
                       <thead>
@@ -343,7 +397,7 @@ const Dashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.03]">
-                        {enquiries.map(enq => (
+                        {filteredEnquiries.map(enq => (
                           <tr key={enq.id} className="hover:bg-white/[0.02] transition-colors">
                             <td className="px-4 py-3">
                               <span className="font-mono text-[10px] px-2 py-0.5 rounded-full inline-flex items-center gap-1.5" style={{ backgroundColor: statusColors[enq.status]?.bg, color: statusColors[enq.status]?.text }}>
@@ -373,8 +427,7 @@ const Dashboard = () => {
                             <td className="px-4 py-3 font-mono text-[13px] text-signal-red">{formatPrice(enq.estimated_price_pence)}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <button onClick={() => setSelectedEnquiry(enq)} className="p-1.5 rounded-lg hover:bg-white/[0.04] text-steel/20 hover:text-steel/50 transition-colors"><Eye className="w-3.5 h-3.5" /></button>
-                                <button className="p-1.5 rounded-lg hover:bg-white/[0.04] text-steel/20 hover:text-steel/50 transition-colors"><MessageSquare className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => setSelectedEnquiry(enq)} aria-label="View enquiry" className="p-1.5 rounded-lg hover:bg-white/[0.04] text-steel/20 hover:text-steel/50 transition-colors"><Eye className="w-3.5 h-3.5" /></button>
                               </div>
                             </td>
                           </tr>
@@ -478,7 +531,7 @@ const Dashboard = () => {
               <motion.div key="revenue" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.4, ease: customEase }}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                   {[
-                    { label: "This Month", value: formatPrice(enquiries.filter(e => e.status === "completed").reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0)) },
+                    { label: "This Month", value: formatPrice(enquiries.filter(e => e.status === "completed" && e.completed_at && new Date(e.completed_at).getMonth() === new Date().getMonth() && new Date(e.completed_at).getFullYear() === new Date().getFullYear()).reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0)) },
                     { label: "Total Revenue", value: formatPrice(enquiries.filter(e => e.status === "completed").reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0)) },
                     { label: "Avg Repair Value", value: enquiries.filter(e => e.status === "completed").length > 0 ? formatPrice(Math.round(enquiries.filter(e => e.status === "completed").reduce((sum, e) => sum + (e.confirmed_price_pence || e.estimated_price_pence || 0), 0) / enquiries.filter(e => e.status === "completed").length)) : "£0" },
                     { label: "Completed Repairs", value: enquiries.filter(e => e.status === "completed").length.toString() },
@@ -498,12 +551,19 @@ const Dashboard = () => {
                   <div className="rounded-2xl p-6" style={{ backgroundColor: "#0F0F12", border: "1px solid rgba(255,255,255,0.05)" }}>
                     <h3 className="font-body text-[15px] text-steel font-medium mb-4">Shop Information</h3>
                     <div className="space-y-4">
-                      {[{ label: "Shop Name", value: "MobiMedic" }, { label: "Address", value: "Guilden Sutton, Chester" }, { label: "Phone", value: "+44 1234 567890" }, { label: "Email", value: "hello@mobimedic.co.uk" }].map(field => (
-                        <div key={field.label}>
+                      {([{ label: "Shop Name", key: "shop_name" }, { label: "Address", key: "address" }, { label: "Phone", key: "phone" }, { label: "Email", key: "email" }] as const).map(field => (
+                        <div key={field.key}>
                           <label className="font-mono text-[9px] text-steel/20 uppercase tracking-wider block mb-1.5">{field.label}</label>
-                          <input defaultValue={field.value} className="w-full px-4 py-3 rounded-xl font-body text-[13px] text-steel placeholder:text-steel/20 outline-none border border-white/[0.05] focus:border-signal-red/30 transition-colors" style={{ backgroundColor: "#1D1D21" }} />
+                          <input value={shopInfo[field.key]} onChange={e => setShopInfo(prev => ({ ...prev, [field.key]: e.target.value }))} className="w-full px-4 py-3 rounded-xl font-body text-[13px] text-steel placeholder:text-steel/20 outline-none border border-white/[0.05] focus:border-signal-red/30 transition-colors" style={{ backgroundColor: "#1D1D21" }} />
                         </div>
                       ))}
+                      <button
+                        onClick={saveShopInfo}
+                        disabled={savingSettings}
+                        className="px-5 py-3 rounded-xl font-body text-[13px] font-semibold text-white bg-signal-red hover:bg-signal-red/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingSettings ? "Saving..." : "Save Changes"}
+                      </button>
                     </div>
                   </div>
                   <div className="rounded-2xl p-6" style={{ backgroundColor: "#0F0F12", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -527,7 +587,7 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: 480 }}
               transition={{ duration: 0.4, ease: customEase }}
-              className="fixed top-0 right-0 bottom-0 w-[480px] z-40 overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-[480px] z-40 overflow-y-auto"
               style={{ backgroundColor: "#0F0F12", borderLeft: "1px solid rgba(255,255,255,0.06)" }}
             >
               <div className="p-6">
@@ -536,7 +596,7 @@ const Dashboard = () => {
                     <h2 className="font-display text-[24px] font-light text-steel">{selectedEnquiry.guest_name || "Guest"}</h2>
                     <span className="font-mono text-[11px] text-signal-red">{selectedEnquiry.ref}</span>
                   </div>
-                  <button onClick={() => setSelectedEnquiry(null)} className="p-2 rounded-lg hover:bg-white/[0.04] text-steel/30"><X className="w-5 h-5" /></button>
+                  <button onClick={() => setSelectedEnquiry(null)} aria-label="Close panel" className="p-2 rounded-lg hover:bg-white/[0.04] text-steel/30"><X className="w-5 h-5" /></button>
                 </div>
 
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-6" style={{ backgroundColor: statusColors[selectedEnquiry.status]?.bg }}>
@@ -622,7 +682,8 @@ const Dashboard = () => {
                     className="w-full px-4 py-3 rounded-xl font-body text-[13px] text-steel placeholder:text-steel/15 outline-none resize-none h-24 border border-white/[0.05] focus:border-signal-red/30 transition-colors"
                     style={{ backgroundColor: "#1D1D21" }}
                     onBlur={async (e) => {
-                      await supabase.from("enquiries").update({ owner_notes: e.target.value }).eq("id", selectedEnquiry.id);
+                      const { error } = await supabase.from("enquiries").update({ owner_notes: e.target.value }).eq("id", selectedEnquiry.id);
+                      if (error) toast.error(`Failed to save notes: ${error.message}`);
                     }}
                   />
                 </div>
